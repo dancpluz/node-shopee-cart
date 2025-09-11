@@ -1,18 +1,23 @@
 import prompts from "prompts";
-import { addItem, Cart, deleteItem } from "./services/cart";
+import { addItem, Cart, deleteItem, lookAtCart } from "./services/cart";
 import { createItem } from "./services/item";
 
 // actions: 
 // add new item
 // look at cart
-// select item
 
 const cart: Cart = {
   items: [],
   totalPrice: 0
 };
 
+let selectedItemId: number | null = null;
+
 async function promptsMenu() {
+  const onCancel = () => {
+    console.log('bye');
+    return false;
+  }
 
   const actionResponse = await prompts({
     type: "select",
@@ -21,9 +26,8 @@ async function promptsMenu() {
     choices: [
       { title: "Add new item", value: "add" },
       { title: `Look at your cart (${cart.items.length} items)`, value: "look", disabled: cart.items.length === 0 },
-      { title: "Select item", value: "select" }
     ]
-  });
+  }, { onCancel });
 
   switch (actionResponse.action) {
     case "add": {
@@ -48,22 +52,44 @@ async function promptsMenu() {
         }
       ];
 
-      const itemResponse = await prompts(questions);
+      const itemResponse = await prompts(questions, { onCancel });
+      if (!itemResponse.name || !itemResponse.price || !itemResponse.quantity) {
+        console.log('Invalid item data');
+        return true;
+      }
       const item = await createItem(itemResponse.name, itemResponse.price, itemResponse.quantity);
       await addItem(cart, item);
-      break;
+      return true;
+    } 
+    case "look": {
+      const itemChoices = cart.items.map((item, idx) => ({
+        title: `${idx + 1}. ${item.name} (ID: ${item.id}) - Quantity: ${item.quantity}, Price: $${item.price.toFixed(2)}`,
+        value: item.id
+      }));
+      itemChoices.push({ title: 'Back', value: -1 });
+
+      const itemResponse = await prompts({
+        type: "select",
+        name: "id",
+        message: "Select an item to view details:",
+        choices: itemChoices
+      }, { onCancel });
+
+      selectedItemId = itemResponse.id;
+
+      // const itemResponseActions
+      
+      return true;
     }
   }
 }
 
 (async function main() {
-  await promptsMenu();
-  
-  const item = await createItem("Item 1", 100, 2);
-  await addItem(cart, item);
-  await addItem(cart, await createItem("Item 4", 234, 1));
+  while (true) {
+    const result = await promptsMenu();
+    if (!result) break;
+  }
+
   console.log(cart);
 
-  await deleteItem(cart, item.id);
-  console.log(cart);
 })()
