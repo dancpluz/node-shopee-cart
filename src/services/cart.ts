@@ -1,6 +1,6 @@
 import { Item } from "./item";
 
-interface Cart {
+export interface Cart {
   items: Item[]
   totalPrice: number
 }
@@ -12,12 +12,38 @@ interface Cart {
 // clear cart
 // total price
 
-async function addItem(cart: Cart, item: Item) {}
+export async function addItem(cart: Cart, item: Item) {
+  cart.items.push(item);
+  cart.totalPrice += item.price * item.quantity;
+}
 
-async function removeItem(cart: Cart, itemId: number) {}
+export async function removeItem(cart: Cart, itemId: number) {
+  const itemIndex = cart.items.findIndex(item => item.id === itemId);
+  if (itemIndex !== -1) {
+    const item = cart.items[itemIndex];
+    cart.items.splice(itemIndex, 1);
+    cart.totalPrice -= item.price * item.quantity;
+  }
+}
 
-async function deleteItem(cart: Cart, itemId: number) {}
+export async function deleteItem(cart: Cart, itemId: number) {
+  const itemIndex = cart.items.findIndex(item => item.id === itemId);
+  if (itemIndex !== -1) {
+    const item = cart.items[itemIndex];
+    cart.items.splice(itemIndex, 1);
+    cart.totalPrice -= item.price * item.quantity;
+  }
+}
 
-async function clearCart(cart: Cart) {}
+export async function clearCart(cart: Cart) {
+  cart.items = [];
+  cart.totalPrice = 0;
+}
 
-async function increaseItemQuantity(cart: Cart, itemId: number) {}
+export async function increaseItemQuantity(cart: Cart, itemId: number) {
+  const item = cart.items.find(item => item.id === itemId);
+  if (item) {
+    item.quantity++;
+    cart.totalPrice += item.price;
+  }
+}
