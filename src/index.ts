@@ -1,1 +1,3 @@
-console.log('Initial')
+
+
+const cart = []
