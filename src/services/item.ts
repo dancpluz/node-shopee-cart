@@ -19,34 +19,32 @@ export async function createItem(name: string, price: number, quantity: number) 
 }
 
 export async function itemActions(cart: Cart, selectedItemId: number) {
+  const selectedItem = cart.items.find(item => item.id === selectedItemId);
+  if (!selectedItem) return;
+
   const itemResponseActions = await prompts({
     type: "select",
     name: "action",
-    message: "What do you want to do?",
+    message: `What would you like to do with "${selectedItem.name}"?`,
     choices: [
-      { title: "Increase item quantity", value: "increase" },
-      { title: "Decrease item quantity", value: "decrease" },
-      { title: "Remove item", value: "remove" },
-      { title: "Back", value: "back" },
+      { title: "➕ Increase quantity", value: "increase" },
+      { title: "➖ Decrease quantity", value: "decrease" },
+      { title: "🗑️ Remove item from cart", value: "remove" },
+      { title: "↩️ Go back", value: "back" },
     ]
   });
 
   switch (itemResponseActions.action) {
-    case "increase": {
+    case "increase":
       await increaseItemQuantity(cart, selectedItemId);
       break;
-    }
-    case "decrease": {
+    case "decrease":
       await decreaseItemQuantity(cart, selectedItemId);
       break;
-    }
-    case "remove": {
+    case "remove":
       await removeItem(cart, selectedItemId);
       break;
-    }
-    case "back": {
+    case "back":
       break;
-    }
   }
-  return;
 }

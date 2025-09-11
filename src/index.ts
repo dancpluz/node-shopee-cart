@@ -1,98 +1,102 @@
 import prompts from "prompts";
 import { addItem, Cart, clearCart } from "./services/cart";
 import { createItem, itemActions } from "./services/item";
-
-// actions: 
-// add new item
-// look at cart
+import { colors } from "./utils";
 
 const cart: Cart = {
   items: [],
   totalPrice: 0
 };
 
-let selectedItemId: number | null = null;
-
-async function promptsMenu() {
+async function promptsMenu(): Promise<boolean> {
   const onCancel = () => {
-    console.log('bye');
+    console.log(colors.red, "\n👋 Operation cancelled. See you later!", colors.reset);
     return false;
   }
 
   const actionResponse = await prompts({
     type: "select",
     name: "action",
-    message: "What do you want to do?",
+    message: "What would you like to do?",
     choices: [
-      { title: "Add new item", value: "add" },
-      { title: `Look at your cart (${cart.items.length} items)`, value: "look", disabled: cart.items.length === 0 },
+      { title: "🛍️ Add new item", value: "add" },
+      { title: `🛒 View my cart (${cart.items.length} items)`, value: "look", disabled: cart.items.length === 0 },
+      { title: "🚪 Exit", value: "exit" }
     ]
   }, { onCancel });
 
+  if (actionResponse.action === 'exit') {
+    console.log(colors.green, "\n👋 Thank you for using the cart simulator! See you again.", colors.reset);
+    return false;
+  }
+
   switch (actionResponse.action) {
     case "add": {
-      const questions = [
-        {
-          type: 'text' as const,
-          name: 'name',
-          message: 'What is the item name?'
-        },
-        {
-          type: 'number' as const,
-          name: 'price',
-          message: 'What is the item price?',
-          validate: (value: number) => value > 0 ? true : 'Price must be greater than 0'
-        },
-        {
-          type: 'number' as const,
-          name: 'quantity',
-          message: 'What is the item quantity?',
-          validate: (value: number) => value > 0 ? true : 'Quantity must be greater than 0',
-          initial: 1
-        }
-      ];
+      console.log(colors.cyan, "\n--- ADD NEW ITEM ---", colors.reset);
+      const itemResponse = await prompts([
+        { type: 'text', name: 'name', message: "What is the item's name?" },
+        { type: 'number', name: 'price', message: 'What is the price? (e.g., 10.50)', float: true, validate: v => v > 0 || 'Price must be greater than 0' },
+        { type: 'number', name: 'quantity', message: 'What is the quantity?', initial: 1, validate: v => v > 0 || 'Quantity must be greater than 0' }
+      ], { onCancel });
 
-      const itemResponse = await prompts(questions, { onCancel });
-      if (!itemResponse.name || !itemResponse.price || !itemResponse.quantity) {
-        console.log('Invalid item data');
-        return true;
+      if (itemResponse.name && itemResponse.price && itemResponse.quantity) {
+        const item = await createItem(itemResponse.name, itemResponse.price, itemResponse.quantity);
+        await addItem(cart, item);
       }
-      const item = await createItem(itemResponse.name, itemResponse.price, itemResponse.quantity);
-      await addItem(cart, item);
-      return true;
-    } 
+      break;
+    }
     case "look": {
+      console.clear();
+      console.log(colors.cyan, "--- 🛒 YOUR SHOPPING CART 🛒 ---", colors.reset);
+
+      cart.items.forEach((item, index) => {
+        const subtotal = (item.price * item.quantity).toFixed(2);
+        console.log(
+          `  ${colors.bright}${index + 1}. ${item.name}${colors.reset}
+     ${colors.dim}(Qty: ${item.quantity} x $${item.price.toFixed(2)}) -> Subtotal: $${subtotal}${colors.reset}`
+        );
+      });
+
+      console.log(colors.yellow, "----------------------------------------", colors.reset);
+      console.log(`${colors.bright}TOTAL: $${cart.totalPrice.toFixed(2)}${colors.reset}`);
+      console.log(colors.yellow, "----------------------------------------\n", colors.reset);
+
       const itemChoices = cart.items.map((item, idx) => ({
-        title: `${idx + 1}. ${item.name} - Quantity: ${item.quantity}, Price: $${item.price.toFixed(2)}, Subtotal: $${(item.price * item.quantity).toFixed(2)}`,
+        title: `${idx + 1}. ${item.name}`,
         value: item.id
       }));
-      itemChoices.push({ title: 'Clear cart', value: -2 });
-      itemChoices.push({ title: 'Back', value: -1 });
+
+      itemChoices.push({ title: '🗑️ Clear cart', value: -2 });
+      itemChoices.push({ title: '↩️ Back to main menu', value: -1 });
 
       const itemResponse = await prompts({
         type: "select",
         name: "id",
-        message: `Select an item to view details: ${cart.items.length} items in cart, Total Price: $${cart.totalPrice.toFixed(2)}`,
+        message: "Select an item to MANAGE or choose an action:",
         choices: itemChoices,
       }, { onCancel });
 
-      selectedItemId = itemResponse.id;
-
-      if (selectedItemId === null || itemResponse.id === -1) return true;
-      if (itemResponse.id === -2) {
+      if (itemResponse.id === null || itemResponse.id === -1) {
+      } else if (itemResponse.id === -2) {
         await clearCart(cart);
-        return true;
+      } else {
+        await itemActions(cart, itemResponse.id);
       }
-
-      await itemActions(cart, selectedItemId);
-      
-      return true;
+      break;
     }
   }
+
+  return true;
 }
 
 (async function main() {
+  console.clear();
+  console.log(colors.magenta, "========================================", colors.reset);
+  console.log(colors.magenta, `  ${colors.bright}🛒 Welcome to the Shopee Cart Simulator 🛒`, colors.reset);
+  console.log(colors.magenta, "========================================\n", colors.reset);
+
   while (true) {
+    console.clear();
     const result = await promptsMenu();
     if (!result) break;
   }
