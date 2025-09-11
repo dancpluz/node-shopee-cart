@@ -1,6 +1,6 @@
 import prompts from "prompts";
 import { addItem, Cart, deleteItem, lookAtCart } from "./services/cart";
-import { createItem } from "./services/item";
+import { createItem, itemActions } from "./services/item";
 
 // actions: 
 // add new item
@@ -63,7 +63,7 @@ async function promptsMenu() {
     } 
     case "look": {
       const itemChoices = cart.items.map((item, idx) => ({
-        title: `${idx + 1}. ${item.name} (ID: ${item.id}) - Quantity: ${item.quantity}, Price: $${item.price.toFixed(2)}`,
+        title: `${idx + 1}. ${item.name} - Quantity: ${item.quantity}, Price: $${item.price.toFixed(2)}`,
         value: item.id
       }));
       itemChoices.push({ title: 'Back', value: -1 });
@@ -77,7 +77,8 @@ async function promptsMenu() {
 
       selectedItemId = itemResponse.id;
 
-      // const itemResponseActions
+      if (selectedItemId === null) return true;
+      await itemActions(cart, selectedItemId);
       
       return true;
     }
@@ -89,7 +90,4 @@ async function promptsMenu() {
     const result = await promptsMenu();
     if (!result) break;
   }
-
-  console.log(cart);
-
 })()
