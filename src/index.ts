@@ -1,5 +1,5 @@
 import prompts from "prompts";
-import { addItem, Cart, deleteItem, lookAtCart } from "./services/cart";
+import { addItem, Cart, clearCart } from "./services/cart";
 import { createItem, itemActions } from "./services/item";
 
 // actions: 
@@ -63,21 +63,27 @@ async function promptsMenu() {
     } 
     case "look": {
       const itemChoices = cart.items.map((item, idx) => ({
-        title: `${idx + 1}. ${item.name} - Quantity: ${item.quantity}, Price: $${item.price.toFixed(2)}`,
+        title: `${idx + 1}. ${item.name} - Quantity: ${item.quantity}, Price: $${item.price.toFixed(2)}, Subtotal: $${(item.price * item.quantity).toFixed(2)}`,
         value: item.id
       }));
+      itemChoices.push({ title: 'Clear cart', value: -2 });
       itemChoices.push({ title: 'Back', value: -1 });
 
       const itemResponse = await prompts({
         type: "select",
         name: "id",
-        message: "Select an item to view details:",
-        choices: itemChoices
+        message: `Select an item to view details: ${cart.items.length} items in cart, Total Price: $${cart.totalPrice.toFixed(2)}`,
+        choices: itemChoices,
       }, { onCancel });
 
       selectedItemId = itemResponse.id;
 
-      if (selectedItemId === null) return true;
+      if (selectedItemId === null || itemResponse.id === -1) return true;
+      if (itemResponse.id === -2) {
+        await clearCart(cart);
+        return true;
+      }
+
       await itemActions(cart, selectedItemId);
       
       return true;
