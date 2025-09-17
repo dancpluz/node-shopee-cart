@@ -3,7 +3,7 @@
 A simple, interactive shopping cart simulator that runs in the terminal, built with Node.js and TypeScript as a personal challenge during the DIO mobile developer bootcamp.
 
 <picture>
-  <img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExMWI5NzlkbHpsaGl0c2M0a2tyZ2k4YnAyY2ZnOWZzbGtscHQ1cmIzeSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/YKao4rRQrTkUgfitld/giphy.gif" align="right" width="30%"/>
+  <img src="shopee.gif" align="right" width="30%"/>
 </picture>
 
 ## 📚 About
